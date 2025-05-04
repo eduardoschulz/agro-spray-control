@@ -1,0 +1,42 @@
+# Go
+# Ignore a pasta de build e arquivos temporários do Go
+/bin/
+/pkg/
+/vendor/
+/*.exe
+/*.exe~
+/*.test
+/*.out
+
+# IDEs e editores
+.idea/
+.vscode/
+
+# Node.js (frontend)
+node_modules/
+dist/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker
+*.dockerfile
+*.tar
+
+# Banco de Dados (arquivos de dados temporários)
+db/.env
+db/db_data/
+
+# Ambiente local de execução
+.env
+*.env
+
+# Arquivos temporários de sistemas operacionais
+.DS_Store
+Thumbs.db
+
+# Arquivos de compilação
+*.compiled
+*.swp
+
