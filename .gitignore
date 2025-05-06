@@ -1,7 +1,6 @@
 # Go
 # Ignore a pasta de build e arquivos temporários do Go
 /bin/
-/pkg/
 /vendor/
 /*.exe
 /*.exe~
