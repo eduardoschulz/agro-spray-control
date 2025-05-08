@@ -3,7 +3,7 @@ package models
 type Fazenda struct {
 	Cod             string    `json:"cod" db:"cod"`
 	Localizacao     string    `json:"localizacao" db:"localizacao"`
-	CpfProprietario string    `json:"cpf_proprietario" db:"cpf_proprietario"`
+	CpfProprietario string    `json:"cpfproprietario" db:"cpfproprietario"`
 }
 
 
