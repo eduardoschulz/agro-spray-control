@@ -1,26 +1,19 @@
 package models
 
-/* import  ( 
-    "time"
-    "golang.org/x/crypto/bcrypt"
-) */
-
-
-
-type Fazenda struct{
-    cod string
-    localizacao string
-    cpf_proprietario string
+type Fazenda struct {
+	Cod             string    `json:"cod" db:"cod"`
+	Localizacao     string    `json:"localizacao" db:"localizacao"`
+	CpfProprietario string    `json:"cpf_proprietario" db:"cpf_proprietario"`
 }
 
 
-func novo_fazenda(cod, localizacao, cpf_proprietario string) *Fazenda {
+func NovaFazenda(cod, localizacao, cpf_proprietario string) *Fazenda {
 
     
   f := &Fazenda{
-    cod: cod,
-    localizacao: localizacao,
-    cpf_proprietario: cpf_proprietario,
+    Cod: cod,
+    Localizacao: localizacao,
+    CpfProprietario: cpf_proprietario,
   }
 
   return f
