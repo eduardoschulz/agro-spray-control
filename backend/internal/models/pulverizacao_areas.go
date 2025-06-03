@@ -1,20 +1,16 @@
 package models
 
 type PulverizacaoArea struct {
-	CodPulv            string    `json:"codpulv" db:"codpulv"`
-	CodArea string    `json:"codarea" db:"codarea"`
+	CodPulv string `json:"codpulv" db:"codpulv"`
+	CodArea string `json:"codarea" db:"codarea"`
 }
 
+func NovaPulverizacaoArea(codpulv, codarea string) *PulverizacaoArea {
 
-func NovaPulverizacaoArea (codpulv, codarea string) *PulverizacaoArea {
+	p := &PulverizacaoArea{
+		CodPulv: codpulv,
+		CodArea: codarea,
+	}
 
-    
-    
-  p := &PulverizacaoArea{
-      CodPulv: codpulv,
-      CodArea: codarea,
-  }
-
-  return p
- }
-
+	return p
+}

@@ -1,0 +1,193 @@
+package repositoriese
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"log"
+	"time"
+
+    "github.com/eduardoschulz/agro-spray-control/backend/internal/models"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+)
+
+type UsuarioRepo struct {
+	db *sqlx.DB
+}
+
+func NewUsuarioRepo(db *sqlx.DB) *UsuarioRepo {
+	return &UsuarioRepo{db: db}
+}
+
+// Create cria um novo usuário com tratamento específico para PostgreSQL
+func (r *UsuarioRepo) Create(ctx context.Context, usuario *models.Usuario) error {
+	query := `
+		INSERT INTO usuarios (cpf, nome, email, password_hash, nivel_permissao, criado_em)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING cpf
+	`
+
+	// Usando QueryRowContext para PostgreSQL (com RETURNING)
+	err := r.db.QueryRowContext(ctx, query,
+		usuario.CPF,
+		usuario.Nome,
+		usuario.Email,
+		usuario.PasswordHash,
+		usuario.NivelPermissao,
+		usuario.CriadoEm,
+	).Scan(&usuario.CPF)
+
+	if err != nil {
+		// Tratamento específico para erros do PostgreSQL
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code.Name() {
+			case "unique_violation":
+				if pqErr.Constraint == "usuarios_pkey" {
+					return fmt.Errorf("CPF já cadastrado")
+				} else if pqErr.Constraint == "usuarios_email_key" {
+					return fmt.Errorf("e-mail já cadastrado")
+				}
+			}
+		}
+		log.Printf("Erro ao criar usuário: %v", err)
+		return fmt.Errorf("erro ao criar usuário: %w", err)
+	}
+
+	return nil
+}
+
+// GetByCPF busca um usuário com contexto e timeout
+func (r *UsuarioRepo) GetByCPF(ctx context.Context, cpf string) (*models.Usuario, error) {
+	query := `
+		SELECT cpf, nome, email, password_hash, nivel_permissao, criado_em
+		FROM usuarios
+		WHERE cpf = $1
+	`
+
+	var usuario models.Usuario
+	err := r.db.GetContext(ctx, &usuario, query, cpf)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrUsuarioNaoEncontrado
+		}
+		log.Printf("Erro ao buscar usuário: %v", err)
+		return nil, fmt.Errorf("erro ao buscar usuário: %w", err)
+	}
+
+	return &usuario, nil
+}
+
+// Update atualiza os dados do usuário com verificação de versão
+func (r *UsuarioRepo) Update(ctx context.Context, usuario *models.Usuario) error {
+	query := `
+		UPDATE usuarios
+		SET nome = $1, email = $2, nivel_permissao = $3
+		WHERE cpf = $4
+		RETURNING criado_em
+	`
+
+	// Usando transação para consistência
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("erro ao iniciar transação: %w", err)
+	}
+	defer tx.Rollback()
+
+	var criadoEm time.Time
+	err = tx.QueryRowContext(ctx, query,
+		usuario.Nome,
+		usuario.Email,
+		usuario.NivelPermissao,
+		usuario.CPF,
+	).Scan(&criadoEm)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.ErrUsuarioNaoEncontrado
+		}
+		return fmt.Errorf("erro ao atualizar usuário: %w", err)
+	}
+
+	// Atualiza o objeto com os dados retornados do banco
+	usuario.CriadoEm = criadoEm
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("erro ao commitar transação: %w", err)
+	}
+
+	return nil
+}
+
+// UpdatePassword atualiza a senha com tratamento específico para PostgreSQL
+func (r *UsuarioRepo) UpdatePassword(ctx context.Context, cpf string, newPasswordHash []byte) error {
+	query := `
+		UPDATE usuarios
+		SET password_hash = $1
+		WHERE cpf = $2
+	`
+
+	result, err := r.db.ExecContext(ctx, query, newPasswordHash, cpf)
+	if err != nil {
+		return fmt.Errorf("erro ao atualizar senha: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("erro ao verificar linhas afetadas: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return models.ErrUsuarioNaoEncontrado
+	}
+
+	return nil
+}
+
+// ListWithPagination lista usuários com paginação usando recursos do PostgreSQL
+func (r *UsuarioRepo) ListWithPagination(ctx context.Context, limit, offset int) ([]models.Usuario, error) {
+	query := `
+		SELECT cpf, nome, email, nivel_permissao, criado_em
+		FROM usuarios
+		ORDER BY criado_em DESC
+		LIMIT $1 OFFSET $2
+	`
+
+	var usuarios []models.Usuario
+	err := r.db.SelectContext(ctx, &usuarios, query, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao listar usuários: %w", err)
+	}
+
+	return usuarios, nil
+}
+
+// Delete remove um usuário usando CTE para registro de auditoria
+func (r *UsuarioRepo) Delete(ctx context.Context, cpf string) error {
+	query := `
+		WITH deleted AS (
+			DELETE FROM usuarios
+			WHERE cpf = $1
+			RETURNING cpf, email
+		)
+		INSERT INTO usuarios_excluidos (cpf, email, excluido_em)
+		SELECT cpf, email, NOW() FROM deleted
+	`
+
+	result, err := r.db.ExecContext(ctx, query, cpf)
+	if err != nil {
+		return fmt.Errorf("erro ao excluir usuário: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("erro ao verificar linhas afetadas: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return models.ErrUsuarioNaoEncontrado
+	}
+
+	return nil
+}

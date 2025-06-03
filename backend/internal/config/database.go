@@ -37,7 +37,7 @@ func InitDB() error {
 	// Testar a conexão
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	err = DB.PingContext(ctx)
 	if err != nil {
 		return fmt.Errorf("erro ao testar conexão com o banco: %w", err)
