@@ -9,17 +9,23 @@ func TestHash(t *testing.T){
 
     string_teste := "senhaforte123"
 
-    hash, err := gerar_senhahash(string_teste)
+    hash, err := GerarSenha(string_teste)
 
     if err != nil {
         t.Fatalf("Erro ao gerar hash %s\n", err)
     }
     
-    comp_hash ,_ := bcrypt.GenerateFromPassword([]byte(string_teste), 10)
-
-    if string(comp_hash) == string(hash) { //nao tenho certeza se isso ta certo
-        t.Fatalf("Hash da senha difere")
+    // Teste se a senha pode ser verificada com o hash
+    err = bcrypt.CompareHashAndPassword(hash, []byte(string_teste))
+    if err != nil {
+        t.Fatalf("Hash não corresponde à senha original: %v", err)
     }
-
+    
+    // Teste com senha errada
+    err = bcrypt.CompareHashAndPassword(hash, []byte("senhaerrada"))
+    if err == nil {
+        t.Fatal("Hash não deveria corresponder a senha errada")
+    }
+  
 
 }

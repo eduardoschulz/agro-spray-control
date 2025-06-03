@@ -18,7 +18,10 @@ type Usuario struct {
 
 
 func GerarSenha(senha string) ([]byte, error) {
-    return bcrypt.GenerateFromPassword([]byte(senha), bcrypt.DefaultCost);
+     if len(senha) < 8 {
+        return nil, errors.New("senha deve ter pelo menos 8 caracteres")
+    }
+    return bcrypt.GenerateFromPassword([]byte(senha), bcrypt.DefaultCost)
 }
 
 func (u *Usuario) VerificarSenha(senha string) error{
@@ -26,25 +29,37 @@ func (u *Usuario) VerificarSenha(senha string) error{
     return bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(senha))
 }
 
-
 func NovoUsuario(cpf, email, nome, senha string, nivel_permissao int8) (*Usuario, error) {
+    // Validação básica
+    if !validarCPF(cpf) {
+        return nil, errors.New("CPF inválido")
+    }
+    
+    if !validarEmail(email) {
+        return nil, errors.New("e-mail inválido")
+    }
     
     hash, err := GerarSenha(senha)
-
     if err != nil {
-        log.Printf("Erro ao gerar senha %s\n", err)
         return nil, err
     }
     
-  u := &Usuario{
-    CPF: cpf,
-    Email: email, 
-    Nome: nome,
-    PasswordHash: hash,
-    NivelPermissao: nivel_permissao,
-    CriadoEm: time.Now(),
-  }
+    return &Usuario{
+        CPF:           cpf,
+        Email:         email, 
+        Nome:          nome,
+        PasswordHash:  hash,
+        NivelPermissao: nivel_permissao,
+        CriadoEm:      time.Now(),
+    }, nil
+}
 
-  return u, nil
- }
+func validarCPF(cpf string) bool {
+    // Implementar validação real de CPF
+    return len(cpf) == 11
+}
 
+func validarEmail(email string) bool {
+    // Regex simples para validação de e-mail
+    return regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`).MatchString(email)
+}
