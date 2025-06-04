@@ -1,14 +1,16 @@
 package db
 
 import (
-    "database/sql"
+   _ "database/sql"
+    "github.com/jmoiron/sqlx"
+
    _ "github.com/lib/pq"
     "log"
 )
 
-func Connect(connstr string) *sql.DB {
+func Connect(connstr string) *sqlx.DB {
 
-    db, err := sql.Open("postgres", connstr)
+    db, err := sqlx.Open("postgres", connstr)
     if err != nil {
         log.Fatalf("falha ao conectar ao banco: %v", err)
     }

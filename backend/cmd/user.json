@@ -1,0 +1,6 @@
+{
+  "cpf": "12345678901",
+  "nome": "Teste",
+  "email": "joao@example.com",
+  "passwordHash": "senhasegura123"
+}

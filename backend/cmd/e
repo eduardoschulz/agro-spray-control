@@ -1,0 +1,105 @@
+package main
+
+import (
+	"log"
+	"net/http"
+    "os"
+
+
+	"github.com/gorilla/mux"
+    "github.com/jmoiron/sqlx"
+    _ "github.com/lib/pq"
+
+	"github.com/eduardoschulz/agro-spray-control/backend/internal/handlers"
+	"github.com/eduardoschulz/agro-spray-control/backend/internal/repositories"
+)
+
+func main() {
+    
+    // URL de conexão com o banco de dados
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = "postgres://usuario:senha@localhost:5432/agrospray?sslmode=disable" // substitua pelos seus dados
+	}
+
+	db, err := sqlx.Connect("postgres", dsn)
+	if err != nil {
+		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
+	}
+	defer db.Close()
+
+
+	// Inicialização dos repositórios
+	areaRepo := repositories.NewAreaRepo()
+	fazendaRepo := repositories.NewFazendaRepo()
+	loteRepo := repositories.NewLoteRepo()
+	pulverizacaoRepo := repositories.NewPulverizacaoRepo()
+	pulverizacaoAreaRepo := repositories.NewPulverizacaoAreaRepo()
+	produtoRepo := repositories.NewProdutoRepo()
+	usuarioRepo := repositories.NewUsuarioRepo()
+
+	// Inicialização dos handlers
+	areaHandler := handlers.NewAreaHandler(areaRepo)
+	fazendaHandler := handlers.NewFazendaHandler(fazendaRepo)
+	loteHandler := handlers.NewLoteHandler(loteRepo)
+	pulverizacaoHandler := handlers.NewPulverizacaoHandler(pulverizacaoRepo)
+	pulverizacaoAreaHandler := handlers.NewPulverizacaoAreaHandler(pulverizacaoAreaRepo)
+	produtoHandler := handlers.NewProdutoHandler(produtoRepo)
+	usuarioHandler := handlers.NewUsuarioHandler(usuarioRepo)
+
+	// Configuração do roteador
+	r := mux.NewRouter()
+
+	// Rotas de Áreas
+	r.HandleFunc("/areas", areaHandler.CreateArea).Methods("POST")
+	r.HandleFunc("/areas", areaHandler.ListAreas).Methods("GET")
+	r.HandleFunc("/areas/{cod}", areaHandler.GetArea).Methods("GET")
+	r.HandleFunc("/areas/{cod}", areaHandler.UpdateArea).Methods("PUT")
+	r.HandleFunc("/areas/{cod}", areaHandler.DeleteArea).Methods("DELETE")
+
+	// Rotas de Fazendas
+	r.HandleFunc("/fazendas", fazendaHandler.CreateFazenda).Methods("POST")
+	r.HandleFunc("/fazendas", fazendaHandler.ListFazendas).Methods("GET")
+	r.HandleFunc("/fazendas/{cod}", fazendaHandler.GetFazenda).Methods("GET")
+	r.HandleFunc("/fazendas/{cod}", fazendaHandler.UpdateFazenda).Methods("PUT")
+	r.HandleFunc("/fazendas/{cod}", fazendaHandler.DeleteFazenda).Methods("DELETE")
+
+	// Rotas de Lotes
+	r.HandleFunc("/lotes", loteHandler.CreateLote).Methods("POST")
+	r.HandleFunc("/lotes", loteHandler.ListLotes).Methods("GET")
+	r.HandleFunc("/lotes/{cod}", loteHandler.GetLote).Methods("GET")
+	r.HandleFunc("/lotes/{cod}", loteHandler.UpdateLote).Methods("PUT")
+	r.HandleFunc("/lotes/{cod}", loteHandler.DeleteLote).Methods("DELETE")
+
+	// Rotas de Pulverizações
+	r.HandleFunc("/pulverizacoes", pulverizacaoHandler.CreatePulverizacao).Methods("POST")
+	r.HandleFunc("/pulverizacoes", pulverizacaoHandler.ListPulverizacoes).Methods("GET")
+	r.HandleFunc("/pulverizacoes/{cod}", pulverizacaoHandler.GetPulverizacao).Methods("GET")
+	r.HandleFunc("/pulverizacoes/{cod}", pulverizacaoHandler.UpdatePulverizacao).Methods("PUT")
+	r.HandleFunc("/pulverizacoes/{cod}", pulverizacaoHandler.DeletePulverizacao).Methods("DELETE")
+
+	// Associações entre Pulverizações e Áreas
+	r.HandleFunc("/pulverizacoes/{codPulv}/areas", pulverizacaoAreaHandler.GetAreasByPulverizacao).Methods("GET")
+	r.HandleFunc("/areas/{codArea}/pulverizacoes", pulverizacaoAreaHandler.GetPulverizacoesByArea).Methods("GET")
+	r.HandleFunc("/associar", pulverizacaoAreaHandler.AssociateArea).Methods("POST")
+	r.HandleFunc("/desassociar/{codPulv}/{codArea}", pulverizacaoAreaHandler.RemoveAssociation).Methods("DELETE")
+
+	// Rotas de Produtos
+	r.HandleFunc("/produtos", produtoHandler.CreateProduto).Methods("POST")
+	r.HandleFunc("/produtos", produtoHandler.ListProdutos).Methods("GET")
+	r.HandleFunc("/produtos/{cod}", produtoHandler.GetProduto).Methods("GET")
+	r.HandleFunc("/produtos/{cod}", produtoHandler.UpdateProduto).Methods("PUT")
+	r.HandleFunc("/produtos/{cod}", produtoHandler.DeleteProduto).Methods("DELETE")
+
+	// Rotas de Usuários
+	r.HandleFunc("/usuarios", usuarioHandler.CreateUsuario).Methods("POST")
+	r.HandleFunc("/usuarios", usuarioHandler.ListUsuarios).Methods("GET")
+	r.HandleFunc("/usuarios/{cpf}", usuarioHandler.GetUsuario).Methods("GET")
+	r.HandleFunc("/usuarios/{cpf}", usuarioHandler.UpdateUsuario).Methods("PUT")
+	r.HandleFunc("/usuarios/{cpf}", usuarioHandler.DeleteUsuario).Methods("DELETE")
+
+	// Inicia o servidor
+	log.Println("Servidor iniciado em http://localhost:8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
+}
+

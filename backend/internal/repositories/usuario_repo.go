@@ -63,4 +63,55 @@ func (r *UsuarioRepo) GetByCPF(ctx context.Context, cpf string) (*models.Usuario
     return &usuario, nil
 }
 
-// Adicionar métodos Update, Delete, List, etc.
+func (r *UsuarioRepo) Update(ctx context.Context, usuario *models.Usuario) error {
+	query := `
+		UPDATE usuarios
+		SET nome = :nome,
+			email = :email,
+			password_hash = :password_hash,
+			nivel_permissao = :nivel_permissao
+		WHERE cpf = :cpf
+	`
+
+	_, err := r.db.NamedExecContext(ctx, query, usuario)
+	if err != nil {
+		log.Printf("Erro ao atualizar usuário: %v", err)
+		return fmt.Errorf("erro ao atualizar usuário: %w", err)
+	}
+	return nil
+}
+
+func (r *UsuarioRepo) Delete(ctx context.Context, cpf string) error {
+	query := `
+		DELETE FROM usuarios
+		WHERE cpf = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, cpf)
+	if err != nil {
+		log.Printf("Erro ao deletar usuário: %v", err)
+		return fmt.Errorf("erro ao deletar usuário: %w", err)
+	}
+	return nil
+}
+
+func (r *UsuarioRepo) List(ctx context.Context, page, limit int) ([]models.Usuario, error) {
+	offset := (page - 1) * limit
+	query := `
+		SELECT cpf, nome, email, password_hash, nivel_permissao, criado_em
+		FROM usuarios
+		ORDER BY criado_em DESC
+		LIMIT $1 OFFSET $2
+	`
+
+	var usuarios []models.Usuario
+	err := r.db.SelectContext(ctx, &usuarios, query, limit, offset)
+	if err != nil {
+		log.Printf("Erro ao listar usuários: %v", err)
+		return nil, fmt.Errorf("erro ao listar usuários: %w", err)
+	}
+
+	return usuarios, nil
+}
+
+

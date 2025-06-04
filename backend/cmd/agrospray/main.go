@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
+	"time"
 
-    "github.com/eduardoschulz/agro-spray-control/backend/pkg/db"
-    "fmt"
+	"github.com/eduardoschulz/agro-spray-control/backend/internal/models"
+	"github.com/eduardoschulz/agro-spray-control/backend/internal/repositories"
+	"github.com/eduardoschulz/agro-spray-control/backend/pkg/db"
+
+	"fmt"
 )
 
 type Banco struct {
@@ -36,4 +41,18 @@ func main(){
     )
     db.Connect(connstr)
 
+    novouser := repositories.NewUsuarioRepo(db)
+
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    novoUsuario, _ := models.NovoUsuario(
+		"12345678901",
+		"joao@example.com",
+		"João Silva",
+		"senhaSegura123",
+		1, // nível de permissão
+	)
+
+     novouser.Create(ctx, novoUsuario);
 }
