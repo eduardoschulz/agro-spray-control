@@ -1,0 +1,55 @@
+curl -X POST http://localhost:30000/usuarios \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cpf": "12345678900",
+    "nome": "João da Silva",
+    "senha": "123456",
+    "nivelPermissao": 1
+  }'
+
+curl -X POST http://localhost:30000/fazendas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Fazenda Boa Esperança",
+    "localizacao": "Zona Rural - MG",
+    "cpf_proprietario": "12345678900"
+  }'
+
+curl -X POST http://localhost:30000/areas \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Área 1",
+    "tamanho": "50.5",
+    "codFazenda": "1"
+  }'
+
+curl -X POST http://localhost:30000/lotes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Lote Alpha",
+    "descricao": "Plantio de soja"
+  }'
+
+curl -X POST http://localhost:30000/pulverizacoes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "descricao": "Pulverização contra pragas",
+    "data": "2025-06-01",
+    "hora": "08:00",
+    "lote": "1"
+  }'
+
+curl -X POST http://localhost:30000/produtos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Inseticida XPTO",
+    "fabricante": "AgroTech",
+    "quantidade": 20.5
+  }'
+
+  curl -X POST http://localhost:30000/associar \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cod_pulverizacao": "1",
+    "cod_area": "1"
+  }'
