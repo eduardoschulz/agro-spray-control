@@ -14,16 +14,26 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: agro_db
+      POSTGRES_DB: agrospray
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U agro_user -d agro_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+  # backend:
+  #   image: backend
+  #   container_name: backend
+  #   ports:
+  #     - "30000:30000"
+  #   restart: unless-stopped
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   entrypoint: ["sh", "-c", "sleep 5 && ./main"]
 
   adminer:
     image: adminer
     restart: always
     ports:
-      - 8090:8080
+      - 8080:8080
 

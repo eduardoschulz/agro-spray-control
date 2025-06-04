@@ -96,7 +96,7 @@ func addArea() {
 	codFazenda := input("Código da Fazenda")
 
 	payload := map[string]string{
-		"nome":       nome,
+        "cod": nome,
 		"tamanho":    tamanho,
 		"codFazenda": codFazenda,
 	}

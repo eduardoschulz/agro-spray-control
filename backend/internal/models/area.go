@@ -3,7 +3,7 @@ package models
 type Area struct {
 	Cod        string `json:"cod" db:"cod"`
 	Tamanho    int    `json:"tamanho" db:"tamanho"`
-	CodFazenda string `json:"codfazenda" db:"codfazenda"`
+	CodFazenda string `json:"cod_fazenda" db:"cod_fazenda"`
 }
 
 func NovaArea(cod, codfazenda string, tamanho int) *Area {
